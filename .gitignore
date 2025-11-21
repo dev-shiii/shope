@@ -1,0 +1,15 @@
+# Ignore dependencies
+node_modules/
+
+# Ignore environment files
+.env
+
+# Ignore build outputs
+dist/
+build/
+
+# macOS system files
+.DS_Store
+.env
+client/.env
+server/.env
