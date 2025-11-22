@@ -26,7 +26,8 @@
     "mongoose": "^8.19.4",
     "pdfkit": "^0.17.2",
     "razorpay": "^2.9.6",
-    "resend": "^6.4.2"
+    "resend": "^6.4.2",
+    "stripe": "^20.0.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.22",

@@ -7,41 +7,50 @@ import cartRoutes from "./routes/cartRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 
+// ⭐ NEW — Stripe Payment Routes
+import paymentRoutes from "./routes/paymentRoutes.js";
+import paymentRedirect from "./routes/paymentRedirect.js";
+
 import errorHandler from "./middleware/errorMiddleware.js";
 
 const app = express();
 
 /*
-  🌍 FIXED — FINAL WORKING CORS CONFIG
-  Supports:
+  🌍 FINAL WORKING CORS CONFIG
+  Works with:
   ✔ Localhost frontend
-  ✔ Render backend self domain
-  ✔ Deployed frontend (Vercel/netlify)
+  ✔ Render backend domain
+  ✔ Vercel / Netlify Deployment
 */
-
-
-
-app.use(cors({
-  origin: "*",           // allow ALL frontends
-  methods: "GET,POST,PUT,DELETE,PATCH",
-  allowedHeaders: "Content-Type, Authorization",
-}));
+app.use(
+  cors({
+    origin: "*",
+    methods: "GET,POST,PUT,DELETE,PATCH",
+    allowedHeaders: "Content-Type, Authorization",
+  })
+);
 
 app.use(express.json());
 
-// Root status check
+// Health Check
 app.get("/", (req, res) => {
   res.send("API Running");
 });
 
-// Routes
+// ROUTES
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 
-// Global Error Handler
+// ⭐ Stripe Payment API
+app.use("/api/payment", paymentRoutes);
+
+// ⭐ Stripe Redirect Handler (success/cancel URLs)
+app.use("/payment", paymentRedirect);
+
+// GLOBAL ERROR HANDLER
 app.use(errorHandler);
 
 export default app;
