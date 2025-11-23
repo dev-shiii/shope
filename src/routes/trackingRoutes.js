@@ -5,10 +5,16 @@ import { getOrderTracking, updateOrderTracking } from "../controllers/trackingCo
 
 const router = express.Router();
 
-// Get tracking (user or admin)
+/**
+ * USER or ADMIN → Get tracking + delivery countdown
+ * GET /api/tracking/:id
+ */
 router.get("/:id", protect, getOrderTracking);
 
-// Admin updates tracking
+/**
+ * ADMIN ONLY → manually update location/status if needed
+ * PATCH /api/tracking/:id
+ */
 router.patch("/:id", protect, adminOnly, updateOrderTracking);
 
 export default router;
