@@ -5,8 +5,8 @@ const orderSchema = new mongoose.Schema({
 
   items: [
     {
-      productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
-      quantity: { type: Number, default: 1 },
+      productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+      quantity: Number,
       price: Number
     }
   ],
@@ -15,16 +15,28 @@ const orderSchema = new mongoose.Schema({
   paymentMethod: { type: String, default: "cod" },
   status: { type: String, default: "pending" },
 
-  // <-- SHIPPING ADDRESS
   shippingAddress: {
     fullName: String,
     phone: String,
     street: String,
     city: String,
     state: String,
-    pincode: String
-  }
+    pincode: String,
+  },
 
+  tracking: {
+    status: { type: String, default: "created" },
+    currentLocation: { lat: Number, lng: Number },
+
+    history: [
+      {
+        status: String,
+        location: { lat: Number, lng: Number },
+        note: String,
+        at: { type: Date, default: Date.now }
+      }
+    ]
+  }
 }, { timestamps: true });
 
 export default mongoose.model("Order", orderSchema);

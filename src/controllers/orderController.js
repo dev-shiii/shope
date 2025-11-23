@@ -1,7 +1,6 @@
 import Order from "../models/orderModel.js";
 import generateInvoice from "../utils/invoiceGenerator.js";
 import sendInvoiceEmail from "../utils/sendMail.js";
-
 import fs from "fs";
 import path from "path";
 
@@ -12,7 +11,7 @@ export const createOrder = async (req, res) => {
   try {
     const { items, paymentMethod, shippingAddress, totalAmount } = req.body;
 
-    if (!items || !Array.isArray(items) || items.length === 0) {
+    if (!items || items.length === 0) {
       return res.status(400).json({ message: "Items are required" });
     }
 
@@ -30,51 +29,53 @@ export const createOrder = async (req, res) => {
       status: "placed",
     });
 
-    // Populate products for invoice
+    // ⭐ NEW: Initial Tracking Setup (Simulated)
+    newOrder.tracking = {
+      status: "created",
+      currentLocation: { lat: 28.6139, lng: 77.2090 }, // Default warehouse: Delhi (change as needed)
+      history: [
+        {
+          status: "created",
+          location: { lat: 28.6139, lng: 77.2090 },
+          note: "Order created",
+          at: new Date(),
+        },
+      ],
+    };
+
+    await newOrder.save();
+
+    // Populate products (for invoice)
     await newOrder.populate("items.productId");
 
-    // ----------------------------------------------------
-    // 📁 ALWAYS create invoices folder:
-    // /project/src/invoices/
-    // ----------------------------------------------------
+    // Ensure invoices folder exists
     const invoicesDir = path.join(process.cwd(), "src", "invoices");
     if (!fs.existsSync(invoicesDir)) {
       await fs.promises.mkdir(invoicesDir, { recursive: true });
-      console.log("📁 Created invoices directory:", invoicesDir);
     }
 
-    // Full path for saving invoice file
+    // Invoice file path
     const invoicePath = path.join(
       invoicesDir,
       `invoice_${newOrder._id}.pdf`
     );
 
-    // ----------------------------------------------------
-    // 🧾 Generate invoice (must finish before sending)
-    // ----------------------------------------------------
+    // Generate invoice file
     await generateInvoice(newOrder, invoicePath);
 
-    // ----------------------------------------------------
-    // 📧 Email invoice
-    // ----------------------------------------------------
+    // Email invoice
     if (req.userEmail) {
       try {
         await sendInvoiceEmail(req.userEmail, invoicePath);
       } catch (err) {
         console.log("❌ Failed to send invoice email:", err);
       }
-    } else {
-      console.log("⚠ No user email found — skipping email");
     }
 
-    // ----------------------------------------------------
-    // ✅ RESPONSE (very important)
-    // ----------------------------------------------------
     return res.json({
       message: "Order created successfully",
       order: newOrder,
     });
-
   } catch (err) {
     console.error("❌ Order Create Error:", err);
     return res.status(500).json({ message: "Order creation failed" });
@@ -82,7 +83,7 @@ export const createOrder = async (req, res) => {
 };
 
 // ------------------------------------------------------------------
-// 📌 GET ORDERS
+// 📌 GET ORDERS (User or Admin)
 // ------------------------------------------------------------------
 export const getOrders = async (req, res) => {
   try {
@@ -129,7 +130,6 @@ export const getOrderById = async (req, res) => {
     }
 
     res.json({ order });
-
   } catch (err) {
     console.error("❌ Invalid Order ID:", err);
     res.status(400).json({ message: "Invalid order ID" });

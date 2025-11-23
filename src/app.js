@@ -11,16 +11,15 @@ import adminRoutes from "./routes/adminRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import paymentRedirect from "./routes/paymentRedirect.js";
 
+// ⭐ NEW — Tracking Routes
+import trackingRoutes from "./routes/trackingRoutes.js";
+
 import errorHandler from "./middleware/errorMiddleware.js";
 
 const app = express();
 
 /*
-  🌍 FINAL WORKING CORS CONFIG
-  Works with:
-  ✔ Localhost frontend
-  ✔ Render backend domain
-  ✔ Vercel / Netlify Deployment
+  🌎 CORS (Frontend + Backend)
 */
 app.use(
   cors({
@@ -32,7 +31,7 @@ app.use(
 
 app.use(express.json());
 
-// Health Check
+// Root status check
 app.get("/", (req, res) => {
   res.send("API Running");
 });
@@ -44,11 +43,12 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 
-// ⭐ Stripe Payment API
+// ⭐ Stripe Payment
 app.use("/api/payment", paymentRoutes);
-
-// ⭐ Stripe Redirect Handler (success/cancel URLs)
 app.use("/payment", paymentRedirect);
+
+// ⭐ Tracking Routes
+app.use("/api/tracking", trackingRoutes);
 
 // GLOBAL ERROR HANDLER
 app.use(errorHandler);
