@@ -1,47 +1,43 @@
-import nodemailer from "nodemailer";
+// src/utils/sendMail.js
+import sgMail from "@sendgrid/mail";
+import fs from "fs";
 import path from "path";
-import dns from "dns"; // 🌟 IMPORT NODE'S BUILT-IN DNS MODULE
 
-// 🌟 FIX: Force Node to use standard IPv4 to prevent Render's ENETUNREACH crash
-dns.setDefaultResultOrder("ipv4first");
+if (!process.env.SENDGRID_API_KEY) {
+  console.error("❌ Missing SENDGRID_API_KEY in environment");
+} else {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 const sendInvoiceEmail = async (to, invoicePath) => {
   try {
-    console.log("📧 Preparing invoice email (Nodemailer)...");
+    console.log("📧 Preparing invoice email (SendGrid)...");
     console.log(" ➤ To:", to);
     console.log(" ➤ Invoice Path:", invoicePath);
 
-    // Swap 'service: gmail' for explicit host settings to be extra safe
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    const attachment = fs.readFileSync(invoicePath).toString("base64");
 
-    const mailOptions = {
-      from: `"ShopEasy" <${process.env.EMAIL_USER}>`, 
-      to: to,
-      subject: "Your Order Invoice - ShopEasy",
-      text: "Thank you for your order! Your invoice is attached to this email.",
+    const msg = {
+      to,
+      from: process.env.FROM_EMAIL, // verified sender
+      subject: "Your Order Invoice",
+      text: "Thank you for your order! Your invoice is attached.",
       attachments: [
         {
+          content: attachment,
           filename: path.basename(invoicePath),
-          path: invoicePath, 
-          contentType: "application/pdf",
+          type: "application/pdf",
+          disposition: "attachment",
         },
       ],
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log("✅ Invoice email sent successfully! ID:", info.messageId);
-    
-    return info;
+    const response = await sgMail.send(msg);
+    console.log("✅ Invoice email sent successfully (SendGrid)");
+    return response;
   } catch (error) {
-    console.error("❌ Nodemailer Email Error:", error.message);
+    console.error("❌ SendGrid Email Error:", error && error.message);
+    if (error && error.response) console.error("➡ SendGrid response:", error.response.body);
     throw error;
   }
 };
