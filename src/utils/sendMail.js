@@ -1,43 +1,43 @@
-// src/utils/sendMail.js
-import sgMail from "@sendgrid/mail";
-import fs from "fs";
+import nodemailer from "nodemailer";
 import path from "path";
-
-if (!process.env.SENDGRID_API_KEY) {
-  console.error("❌ Missing SENDGRID_API_KEY in environment");
-} else {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-}
 
 const sendInvoiceEmail = async (to, invoicePath) => {
   try {
-    console.log("📧 Preparing invoice email (SendGrid)...");
+    console.log("📧 Preparing invoice email (Nodemailer)...");
     console.log(" ➤ To:", to);
     console.log(" ➤ Invoice Path:", invoicePath);
 
-    const attachment = fs.readFileSync(invoicePath).toString("base64");
+    // 1. Create the email transporter using Gmail
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
 
-    const msg = {
-      to,
-      from: process.env.FROM_EMAIL, // verified sender
-      subject: "Your Order Invoice",
-      text: "Thank you for your order! Your invoice is attached.",
+    // 2. Set up who the email is to, from, and the attached PDF
+    const mailOptions = {
+      from: `"ShopEasy" <${process.env.EMAIL_USER}>`, // Looks professional!
+      to: to,
+      subject: "Your Order Invoice - ShopEasy",
+      text: "Thank you for your order! Your invoice is attached to this email.",
       attachments: [
         {
-          content: attachment,
           filename: path.basename(invoicePath),
-          type: "application/pdf",
-          disposition: "attachment",
+          path: invoicePath, // Nodemailer reads the file directly!
+          contentType: "application/pdf",
         },
       ],
     };
 
-    const response = await sgMail.send(msg);
-    console.log("✅ Invoice email sent successfully (SendGrid)");
-    return response;
+    // 3. Send the email!
+    const info = await transporter.sendMail(mailOptions);
+    console.log("✅ Invoice email sent successfully (Nodemailer) ID:", info.messageId);
+    
+    return info;
   } catch (error) {
-    console.error("❌ SendGrid Email Error:", error && error.message);
-    if (error && error.response) console.error("➡ SendGrid response:", error.response.body);
+    console.error("❌ Nodemailer Email Error:", error.message);
     throw error;
   }
 };
