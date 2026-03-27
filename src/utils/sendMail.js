@@ -1,5 +1,9 @@
 import nodemailer from "nodemailer";
 import path from "path";
+import dns from "dns"; // 🌟 IMPORT NODE'S BUILT-IN DNS MODULE
+
+// 🌟 FIX: Force Node to use standard IPv4 to prevent Render's ENETUNREACH crash
+dns.setDefaultResultOrder("ipv4first");
 
 const sendInvoiceEmail = async (to, invoicePath) => {
   try {
@@ -7,33 +11,33 @@ const sendInvoiceEmail = async (to, invoicePath) => {
     console.log(" ➤ To:", to);
     console.log(" ➤ Invoice Path:", invoicePath);
 
-    // 1. Create the email transporter using Gmail
+    // Swap 'service: gmail' for explicit host settings to be extra safe
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
     });
 
-    // 2. Set up who the email is to, from, and the attached PDF
     const mailOptions = {
-      from: `"ShopEasy" <${process.env.EMAIL_USER}>`, // Looks professional!
+      from: `"ShopEasy" <${process.env.EMAIL_USER}>`, 
       to: to,
       subject: "Your Order Invoice - ShopEasy",
       text: "Thank you for your order! Your invoice is attached to this email.",
       attachments: [
         {
           filename: path.basename(invoicePath),
-          path: invoicePath, // Nodemailer reads the file directly!
+          path: invoicePath, 
           contentType: "application/pdf",
         },
       ],
     };
 
-    // 3. Send the email!
     const info = await transporter.sendMail(mailOptions);
-    console.log("✅ Invoice email sent successfully (Nodemailer) ID:", info.messageId);
+    console.log("✅ Invoice email sent successfully! ID:", info.messageId);
     
     return info;
   } catch (error) {
