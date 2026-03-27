@@ -62,7 +62,8 @@ export const createOrder = async (req, res) => {
     // --- Email Invoice ---
     if (req.userEmail) {
       try {
-        await sendInvoiceEmail(req.userEmail, invoicePath);
+        // This places the order instantly, and sends the email in the background!
+sendInvoiceEmail(req.userEmail, invoicePath).catch(err => console.log("Background email failed", err));
       } catch (err) {
         console.error("❌ Invoice email failed:", err);
       }
